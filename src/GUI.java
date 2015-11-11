@@ -1,18 +1,13 @@
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
 import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.mail.BodyPart;
+import javax.mail.Flags;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Multipart;
-import javax.swing.DefaultListCellRenderer;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -21,10 +16,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
-import java.awt.CardLayout;
-import javax.swing.BoxLayout;
-import javax.swing.GroupLayout;
-import javax.swing.GroupLayout.Alignment;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -45,6 +36,8 @@ public class GUI extends JFrame {
 	private ArrayList<Msg> subjects;
 	private  JPanel panel;
 	private JTextField textSearch;
+	private JTextField textPhrase;
+	private JTextField textFlag;
 	//private String[] subjects = {"hello","bye"};
 	/**
 	 * Launch the application.
@@ -74,14 +67,16 @@ public class GUI extends JFrame {
 		contentPane.add(lblTitle, "push, align center" );
 		
 		panel = new JPanel();
-		panel.setBounds(320, 50, 500, 250);
+		panel.setBounds(320, 45, 500, 250);
 		panel.setVisible(false);
 		contentPane.add(panel);
 		
 		textFrom = new JTextArea();
+		textFrom.setEditable(false);
 		textFrom.setBounds(63, 0, 428, 23);
 		
 		textBody = new JTextArea();
+		textBody.setEditable(false);
 		textBody.setLineWrap(true);
 		textBody.setBounds(0, 90, 491, 216);
 		panel.setLayout(null);
@@ -89,6 +84,7 @@ public class GUI extends JFrame {
 		panel.add(textBody);
 		
 		JTextArea textArea = new JTextArea();
+		textArea.setEditable(false);
 		textArea.setBounds(63, 33, 428, 23);
 		panel.add(textArea);
 		
@@ -145,7 +141,6 @@ public class GUI extends JFrame {
 		JButton btnSearch = new JButton("SEARCH");
 		btnSearch.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				
 				try {
 					inbox.setSearchTerm(textSearch.getText());
 					inbox.processMail();
@@ -164,6 +159,73 @@ public class GUI extends JFrame {
 		});
 		btnSearch.setBounds(145, 325, 117, 29);
 		contentPane.add(btnSearch);
+		
+		textPhrase = new JTextField();
+		textPhrase.setBounds(320, 312, 134, 28);
+		contentPane.add(textPhrase);
+		textPhrase.setColumns(10);
+		
+		textFlag = new JTextField();
+		textFlag.setBounds(320, 350, 134, 28);
+		contentPane.add(textFlag);
+		textFlag.setColumns(10);
+		
+		JButton btnFlag = new JButton("Create Flag");
+		btnFlag.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				inbox.setSearchTerm(textPhrase.getText());
+				try {
+					inbox.processMail();
+				} catch (MessagingException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				Message[] messagesToFlag = inbox.getMessages();
+				Flags processedFlag = new Flags(textFlag.getText());
+				for (Message message : messagesToFlag){
+					
+					try {
+						message.setFlags(processedFlag, true);
+						//System.out.print("c"+message.getFlags().contains(textFlag.getText()));
+						
+					} catch (MessagingException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+				}
+	
+				try {
+					inbox.setSearchTerm(null);
+					inbox.processMail();
+					gui.setMessages(inbox.getMessages(),inbox.getSubjects());
+					contentPane.removeAll();
+					paintGUI();
+					gui.setInboxTable();
+				} catch (MessagingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+			}
+			
+		});
+		btnFlag.setBounds(455, 313, 117, 59);
+		contentPane.add(btnFlag);
+		
+		JLabel lblPhraseToFlag = new JLabel("Phrase to flag");
+		lblPhraseToFlag.setBounds(320, 300, 108, 16);
+		contentPane.add(lblPhraseToFlag);
+		
+		JLabel lblNewLabel = new JLabel("Flag name");
+		lblNewLabel.setBounds(320, 337, 71, 16);
+		contentPane.add(lblNewLabel);
 	
 	}
 	

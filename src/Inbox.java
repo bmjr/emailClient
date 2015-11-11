@@ -74,6 +74,12 @@ public class Inbox {
     					read.add(Boolean.FALSE);
     					System.out.println("size "+read.size());
     				}
+    				
+    				String[] userFlags = flag.getUserFlags();
+    				for(String userFlag : userFlags){
+    				seen+=","+userFlag;
+    					
+    				}
 					
 					subject=message.getSubject();
 					

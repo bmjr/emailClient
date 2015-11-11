@@ -102,7 +102,7 @@ public class EmailGUI extends JFrame {
 				if (filename != null){
 					attachmentList.add(fd.getDirectory()+fd.getFile());
 					attachmentCount++;
-					//lblAttachments.setText(attachmentCount+" attachment(s)");
+					lblAttachments.setText(attachmentCount+" attachment(s)");
 				}
 				
 				
