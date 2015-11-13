@@ -38,7 +38,9 @@ public class GUI extends JFrame {
 	private JTextField textSearch;
 	private JTextField textPhrase;
 	private JTextField textFlag;
-	//private String[] subjects = {"hello","bye"};
+	private String username;
+	private String password;
+
 	/**
 	 * Launch the application.
 	 */
@@ -46,10 +48,12 @@ public class GUI extends JFrame {
 
 	/**
 	 * Create the frame.
-	 * @param messages 
-	 * @throws MessagingException 
+	 * @param username. The username of the email account.
+	 * @param password. The password of the email account.
 	 */
-	public GUI() {
+	public GUI(String username, String password) {
+		this.username=username;
+		this.password=password;
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 1000, 400);
 		contentPane = new JPanel();
@@ -60,73 +64,71 @@ public class GUI extends JFrame {
 		paintGUI();
 	}
 	
+	/**
+	 * Create all the components of GUI, hide those that don't need to be initially visible
+	 */
 	private void paintGUI(){
-		System.out.println(contentPane.getWidth());
+		final GUI gui = this;
+
 		JLabel lblTitle = new JLabel("Inbox");
 		lblTitle.setBounds(500, 12, 61, 16);
 		contentPane.add(lblTitle, "push, align center" );
 		
 		panel = new JPanel();
-		panel.setBounds(320, 45, 500, 250);
+		panel.setBounds(320, 50, 500, 240);
 		panel.setVisible(false);
 		contentPane.add(panel);
 		
 		textFrom = new JTextArea();
 		textFrom.setEditable(false);
 		textFrom.setBounds(63, 0, 428, 23);
+		panel.add(textFrom);
+		
+		JLabel lblFrom = new JLabel("FROM:");
+		lblFrom.setBounds(21, 7, 51, 16);
+		panel.add(lblFrom);
+		
+		JLabel lblMessage = new JLabel("MESSAGE:");
+		lblMessage.setBounds(0, 73, 61, 16);
+		panel.add(lblMessage);
 		
 		textBody = new JTextArea();
 		textBody.setEditable(false);
 		textBody.setLineWrap(true);
 		textBody.setBounds(0, 90, 491, 216);
 		panel.setLayout(null);
-		panel.add(textFrom);
-		panel.add(textBody);
 		
-		JTextArea textArea = new JTextArea();
-		textArea.setEditable(false);
-		textArea.setBounds(63, 33, 428, 23);
-		panel.add(textArea);
+		JScrollPane scrollPane = new JScrollPane(textBody);
+		scrollPane.setBounds(0, 90, 491, 216);
+		panel.add(scrollPane);
 		
-		JLabel lblFrom = new JLabel("FROM:");
-		lblFrom.setBounds(21, 7, 51, 16);
-		panel.add(lblFrom);
 		
-		JLabel lblSubject = new JLabel("SUBJECT:");
-		lblSubject.setBounds(0, 40, 61, 16);
-		panel.add(lblSubject);
-		
-		JLabel lblMessage = new JLabel("MESSAGE:");
-		lblMessage.setBounds(0, 73, 61, 16);
-		panel.add(lblMessage);
-		final GUI gui = this;
 		JButton btnRefreshInbox = new JButton("Refresh Inbox");
 		btnRefreshInbox.setFocusPainted(false);
 		btnRefreshInbox.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
+					contentPane.removeAll();
+					panel.setVisible(false);
 					inbox.setSearchTerm(null);
 					inbox.processMail();
 					gui.setMessages(inbox.getMessages(),inbox.getSubjects());
-					contentPane.removeAll();
 					paintGUI();
 					gui.setInboxTable();
 				} catch (MessagingException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
 		});
 		btnRefreshInbox.setBounds(6, 7, 117, 29);
 		contentPane.add(btnRefreshInbox);
-		
+		final GUI inboxGUI = this;
 		JButton btnCompose = new JButton("Compose");
 		btnCompose.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				EmailGUI compose = new EmailGUI();
+				EmailGUI compose = new EmailGUI(inboxGUI.username,inboxGUI.password);
 				compose.setVisible(true);
 			}
 		});
@@ -149,10 +151,8 @@ public class GUI extends JFrame {
 					paintGUI();
 					gui.setInboxTable();
 				} catch (MessagingException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				} catch (IOException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 			}
@@ -173,47 +173,42 @@ public class GUI extends JFrame {
 		JButton btnFlag = new JButton("Create Flag");
 		btnFlag.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				inbox.setSearchTerm(textPhrase.getText());
-				try {
-					inbox.processMail();
-				} catch (MessagingException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-				Message[] messagesToFlag = inbox.getMessages();
-				Flags processedFlag = new Flags(textFlag.getText());
-				for (Message message : messagesToFlag){
-					
+				if(textFlag.getText()!=null){
+					inbox.setSearchTerm(textPhrase.getText());
 					try {
-						message.setFlags(processedFlag, true);
-						//System.out.print("c"+message.getFlags().contains(textFlag.getText()));
-						
-					} catch (MessagingException e) {
+						inbox.processMail();
+					} catch (MessagingException e1) {
 						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					Message[] messagesToFlag = inbox.getMessages();
+					Flags processedFlag = new Flags(textFlag.getText());
+					for (Message message : messagesToFlag){
+						
+						try {
+							message.setFlags(processedFlag, true);
+						} catch (MessagingException e) {
+							e.printStackTrace();
+						}
+					}
+		
+					try {
+						inbox.setSearchTerm(null);
+						inbox.processMail();
+						gui.setMessages(inbox.getMessages(),inbox.getSubjects());
+						contentPane.removeAll();
+						paintGUI();
+						gui.setInboxTable();
+					} catch (MessagingException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
 						e.printStackTrace();
 					}
-
 				}
-	
-				try {
-					inbox.setSearchTerm(null);
-					inbox.processMail();
-					gui.setMessages(inbox.getMessages(),inbox.getSubjects());
-					contentPane.removeAll();
-					paintGUI();
-					gui.setInboxTable();
-				} catch (MessagingException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
 				}
-				
-			}
 			
 		});
 		btnFlag.setBounds(455, 313, 117, 59);
@@ -229,6 +224,11 @@ public class GUI extends JFrame {
 	
 	}
 	
+	/**
+	 * Initialise the inbox table component with emails
+	 * If search term specified only display emails that match search term
+	 * Else display all emails in inbox
+	 */
 	public void setInboxTable(){
 		String col[] = {"Subject","Flag"};
 
@@ -238,11 +238,11 @@ public class GUI extends JFrame {
 
 			@Override
 		    public boolean isCellEditable(int i, int i1) {
-		        return false; //To change body of generated methods, choose Tools | Templates.
+		        return false; 
 		    }
 		
 		};
-		                                            // The 0 argument is number rows.
+		                                            
 		final JTable tablem = new JTable(tableModel);
 		tablem.setBounds(112, 203, 312, 69);
 		
@@ -267,15 +267,14 @@ public class GUI extends JFrame {
 					}
 					else 
 					{
-						// How to get parts from multiple body parts of MIME message
+						
 						Multipart multipart = (Multipart) messages[tablem.getSelectedRow()].getContent();
 						
 						for (int x = 0; x < multipart.getCount(); x++) {
 							BodyPart bodyPart = multipart.getBodyPart(x);
-							// If the part is a plan text message, then print it out.
+
 							if(bodyPart.getContentType().contains("TEXT/PLAIN")) 
 							{
-								System.out.println(bodyPart.getContentType());
 								plaintext=plaintext+bodyPart.getContent().toString();
 							}
 
@@ -290,25 +289,29 @@ public class GUI extends JFrame {
 				} catch (MessagingException e) {
 					e.printStackTrace();
 				}
-	        	finally{}
-	           if ((tablem.getValueAt(tablem.getSelectedRow(), 1)=="UNREAD")){
-	        	   tablem.setValueAt("READ", tablem.getSelectedRow(), 1);
+	        	String flags = (tablem.getValueAt(tablem.getSelectedRow(), 1)).toString();
+	        	String[] seen = flags.split(",");
+	        	String newFlagString = "READ,";
+	        	for(int i=1;i<seen.length;i++){
+	        		   newFlagString+=seen[i].toString()+",";
+	        	   }
+	        	   tablem.setValueAt(newFlagString, tablem.getSelectedRow(), 1);
 	           }
-	            	//updateFlag(tablem.getSelectedRow());
-	             // }
-	        }
+	            	
+	        
 	    });
 	}
 	
-	
+	/**
+	 * Set inbox object in this object
+	 */
 	public void setInbox(Inbox inbox) {
 		this.inbox=inbox;
 	}
 	
-	public void updateFlag(int index){
-		this.inbox.updateFlag(index);
-	}
-
+	/**
+	 * Set message array in this object
+	 */
 	public void setMessages(Message[] messages, ArrayList<Msg> subjects) {
 		this.messages=messages;
 		this.subjects=subjects;

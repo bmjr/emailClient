@@ -25,6 +25,8 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import javax.swing.JLabel;
+import java.awt.Font;
+import javax.swing.JScrollPane;
 
 public class EmailGUI extends JFrame {
 
@@ -42,29 +44,18 @@ public class EmailGUI extends JFrame {
 	private int attachmentCount=0;
 	private ArrayList<String >attachmentList;
 
+	
 	/**
-	 * Launch the application.
+	 * Method to set the components up for EmailGUI
+	 * @param username. The username of the email account.
+	 * @param password. The password of the email account.
 	 */
-	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					EmailGUI frame = new EmailGUI();
-					frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-	}
-
-	/**
-	 * Create the frame.
-	 */
-	public EmailGUI() {
+	public EmailGUI(String username, String password) {
 		final EmailGUI gui = this;
+		this.username=username;
+		this.password=password;
 		attachmentList=new ArrayList<String>();
-		createEmail();
+		createEmail(username,password);
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setBounds(100, 100, 450, 300);
 		contentPane = new JPanel();
@@ -73,12 +64,12 @@ public class EmailGUI extends JFrame {
 		contentPane.setLayout(null);
 		
 		textTo = new JTextField();
-		textTo.setBounds(37, 19, 270, 28);
+		textTo.setBounds(37, 6, 270, 28);
 		contentPane.add(textTo);
 		textTo.setColumns(10);
 		
 		textCC = new JTextField();
-		textCC.setBounds(37, 50, 270, 28);
+		textCC.setBounds(37, 40, 270, 28);
 		contentPane.add(textCC);
 		textCC.setColumns(10);
 		
@@ -86,10 +77,6 @@ public class EmailGUI extends JFrame {
 		textSubject.setBounds(37, 90, 270, 28);
 		contentPane.add(textSubject);
 		textSubject.setColumns(10);
-		
-		textBody = new JTextArea();
-		textBody.setBounds(37, 130, 407, 108);
-		contentPane.add(textBody);
 		final FileDialog fd = new FileDialog(gui, "Select an attachment", FileDialog.LOAD);
 		fd.setDirectory("C:\\");
 		fd.setFile("*.xml");
@@ -115,8 +102,10 @@ public class EmailGUI extends JFrame {
 		JButton btnSend = new JButton("SEND");
 		btnSend.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
+				if (textTo.getText()!=null){
 				sendEmail();
 				gui.dispose();
+				}
 			}
 		});
 		btnSend.setBounds(374, 243, 70, 29);
@@ -125,37 +114,60 @@ public class EmailGUI extends JFrame {
 		lblAttachments = new JLabel("0 attachments");
 		lblAttachments.setBounds(36, 248, 102, 16);
 		contentPane.add(lblAttachments);
+		
+		JLabel lblTo = new JLabel("TO:");
+		lblTo.setBounds(16, 12, 61, 16);
+		contentPane.add(lblTo);
+		
+		JLabel lblCc = new JLabel("CC:");
+		lblCc.setBounds(16, 46, 61, 16);
+		contentPane.add(lblCc);
+		
+		JLabel lblSubject = new JLabel("SUBJECT");
+		lblSubject.setFont(new Font("Lucida Grande", Font.PLAIN, 10));
+		lblSubject.setBounds(0, 97, 61, 16);
+		contentPane.add(lblSubject);
+		
+		textBody = new JTextArea();
+		textBody.setLineWrap(true);
+		
+		
+		JScrollPane scrollPane = new JScrollPane(textBody);
+		scrollPane.setBounds(16, 130, 418, 109);
+		contentPane.add(scrollPane);
+		
+		
 	}
 	
-	private void createEmail(){
-		this.username = "bmjrowe@gmail.com";
-		this.password = "/";
+	/**
+	 * Method to initialise the mimeMessage object so it's ready to be used
+	 * @param username. The username of the email account.
+	 * @param password. The password of the email account.
+	 */
+	private void createEmail(String username, String password){
+		
 		this.smtphost = "smtp.gmail.com";
 
-		// Step 1: Set all Properties
-		// Get system properties
 		Properties props = System.getProperties();
 		props.put("mail.smtp.auth", "true");
 		props.put("mail.smtp.starttls.enable", "true");
 		props.put("mail.smtp.host", smtphost);
 		props.put("mail.smtp.port", "587");
 
-		 
-
 		props.setProperty("mail.user", username);
 		props.setProperty("mail.password", password);
 
-		//Step 2: Establish a mail session (java.mail.Session)
 		this.session = Session.getDefaultInstance(props);
 		message = new MimeMessage(session);
 	}
 	
+	/**
+	 * Send email created by user within the GUI.
+	 */
 	private void sendEmail(){
-		// TODO Auto-generated method stub
-				
+
 				try {
-					
-					// Step 3: Create a message
+
 					message.setFrom(new InternetAddress("bmjrowe@gmail.com"));
 					message.setRecipients(Message.RecipientType.TO,
 							InternetAddress.parse(textTo.getText()));
@@ -176,18 +188,13 @@ public class EmailGUI extends JFrame {
 					message.setContent(multipart);
 					message.saveChanges();
 
-					// Step 4: Send the message by javax.mail.Transport .			
-					Transport tr = session.getTransport("smtp");	// Get Transport object from session		
-					tr.connect(smtphost, username, password); // We need to connect
-					tr.sendMessage(message, message.getAllRecipients()); // Send message
-
-
-					System.out.println("Done");
+							
+					Transport tr = session.getTransport("smtp");
+					tr.connect(smtphost, username, password); 
+					tr.sendMessage(message, message.getAllRecipients());
 
 				} catch (MessagingException e) {
 					throw new RuntimeException(e);
 				}
 			}
-
-
-	}
+}
